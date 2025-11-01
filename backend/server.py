@@ -10,6 +10,7 @@ import os
 from uuid import uuid4
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from contextlib import asynccontextmanager
 
 from db_mysql import AsyncSessionLocal, init_db
@@ -162,7 +163,7 @@ async def get_db():
 @app.post("/api/auth/login", response_model=LoginResponse)
 async def login(request: LoginRequest, session: AsyncSession = Depends(get_db)):
     result = await session.execute(
-        select(FacultyModel).filter(FacultyModel.email == request.email)
+        select(FacultyModel).filter(FacultyModel.email == request.email).options(selectinload(FacultyModel.assignments))
     )
     faculty_obj = result.scalars().first()
     
@@ -218,7 +219,7 @@ async def get_students_with_marks(
         select(StudentModel).filter(
             StudentModel.class_name == class_name,
             StudentModel.enrollments.any(StudentEnrollmentModel.subject == subject)
-        )
+        ).options(selectinload(StudentModel.enrollments))
     )
     students_list = result.scalars().all()
     
