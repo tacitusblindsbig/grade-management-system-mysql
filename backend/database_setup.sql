@@ -74,10 +74,11 @@ CREATE TABLE IF NOT EXISTS marks (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Student marks/grades';
 
 -- Sample Data: Faculty
+-- All passwords are: password123
 INSERT INTO faculties (id, name, email, employee_id, password) VALUES
-('550e8400-e29b-41d4-a716-446655440000', 'Dr. Rajesh Kumar', 'rajesh@university.edu', 'FAC001', '$2b$12$iKkBAG7M0aCmD6vQiJGBW.mPvgH3p0j6rEzlJwHngYI5oMGLgnZKq'),
-('550e8400-e29b-41d4-a716-446655440001', 'Dr. Priya Sharma', 'priya@university.edu', 'FAC002', '$2b$12$iKkBAG7M0aCmD6vQiJGBW.mPvgH3p0j6rEzlJwHngYI5oMGLgnZKq'),
-('550e8400-e29b-41d4-a716-446655440002', 'Prof. Amit Verma', 'amit@university.edu', 'FAC003', '$2b$12$iKkBAG7M0aCmD6vQiJGBW.mPvgH3p0j6rEzlJwHngYI5oMGLgnZKq');
+('550e8400-e29b-41d4-a716-446655440000', 'Dr. Rajesh Kumar', 'rajesh@university.edu', 'FAC001', '$2b$12$kgeKNV3LptjbKbb63jKkCu8zQCEmr5f3FabA3phwlXp2s2tfzBesS'),
+('550e8400-e29b-41d4-a716-446655440001', 'Dr. Priya Sharma', 'priya@university.edu', 'FAC002', '$2b$12$kgeKNV3LptjbKbb63jKkCu8zQCEmr5f3FabA3phwlXp2s2tfzBesS'),
+('550e8400-e29b-41d4-a716-446655440002', 'Prof. Amit Verma', 'amit@university.edu', 'FAC003', '$2b$12$kgeKNV3LptjbKbb63jKkCu8zQCEmr5f3FabA3phwlXp2s2tfzBesS');
 
 -- Sample Data: Faculty Assignments
 INSERT INTO faculty_assignments (faculty_id, class_name, subject) VALUES

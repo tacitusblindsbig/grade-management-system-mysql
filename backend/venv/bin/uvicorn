@@ -1,4 +1,4 @@
-#!/Users/tacitus/Developer/VibeCodCursor/grade-management-system/backend/venv/bin/python3.11
+#!/Users/tacitus/Developer/VibeCodCursor/grade-management-system/backend/venv/bin/python3
 import sys
 from uvicorn.main import main
 if __name__ == '__main__':

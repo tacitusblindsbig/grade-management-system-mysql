@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 from passlib.context import CryptContext
 import jwt
@@ -10,10 +10,25 @@ import os
 from uuid import uuid4
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+from contextlib import asynccontextmanager
 
-from db_mysql import AsyncSessionLocal, Faculty, FacultyAssignment, Student, StudentEnrollment, Marks, init_db
+from db_mysql import AsyncSessionLocal, init_db
+# Import SQLAlchemy models with aliases to avoid conflict with Pydantic models
+from db_mysql import Faculty as FacultyModel
+from db_mysql import FacultyAssignment as FacultyAssignmentModel
+from db_mysql import Student as StudentModel
+from db_mysql import StudentEnrollment as StudentEnrollmentModel
+from db_mysql import Marks as MarksModel
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    print("Application started. Ensure database_setup.sql has been executed.")
+    yield
+    # Shutdown (if needed)
+
+app = FastAPI(lifespan=lifespan)
 
 # CORS Configuration
 app.add_middleware(
@@ -40,26 +55,26 @@ class Assignment(BaseModel):
     subject: str
 
 class Faculty(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str = Field(default_factory=lambda: str(uuid4()))
     name: str
     email: str
     employee_id: str
     assignments: List[Assignment]
-    
-    class Config:
-        from_attributes = True
 
 class Student(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str = Field(default_factory=lambda: str(uuid4()))
     name: str
     student_id: str
     class_name: str
     enrolled_subjects: List[str]
-    
-    class Config:
-        from_attributes = True
 
 class Marks(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str = Field(default_factory=lambda: str(uuid4()))
     student_id: str
     class_name: str
@@ -69,9 +84,6 @@ class Marks(BaseModel):
     insem: Optional[float] = None
     ct2: Optional[float] = None
     total: Optional[float] = None
-    
-    class Config:
-        from_attributes = True
 
 class LoginRequest(BaseModel):
     email: str
@@ -146,18 +158,12 @@ async def get_db():
     async with AsyncSessionLocal() as session:
         yield session
 
-# Initialize Sample Data (Startup event replacement)
-@app.on_event("startup")
-async def startup_event():
-    # This is now handled by database_setup.sql
-    # Tables are created and populated via SQL script
-    print("Application started. Ensure database_setup.sql has been executed.")
 
 # API Endpoints
 @app.post("/api/auth/login", response_model=LoginResponse)
 async def login(request: LoginRequest, session: AsyncSession = Depends(get_db)):
     result = await session.execute(
-        select(FacultyModel).filter(FacultyModel.email == request.email)
+        select(FacultyModel).filter(FacultyModel.email == request.email).options(selectinload(FacultyModel.assignments))
     )
     faculty_obj = result.scalars().first()
     
@@ -213,7 +219,7 @@ async def get_students_with_marks(
         select(StudentModel).filter(
             StudentModel.class_name == class_name,
             StudentModel.enrollments.any(StudentEnrollmentModel.subject == subject)
-        )
+        ).options(selectinload(StudentModel.enrollments))
     )
     students_list = result.scalars().all()
     
@@ -335,8 +341,6 @@ async def save_marks(
 async def health_check():
     return {"status": "healthy"}
 
-# Import models with different names to avoid conflict with Pydantic models
-from db_mysql import Faculty as FacultyModel
-from db_mysql import Student as StudentModel
-from db_mysql import StudentEnrollment as StudentEnrollmentModel
-from db_mysql import Marks as MarksModel
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
